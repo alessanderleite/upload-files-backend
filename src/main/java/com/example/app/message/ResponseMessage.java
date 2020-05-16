@@ -1,4 +1,4 @@
-package com.example.app.model;
+package com.example.app.message;
 
 public class ResponseMessage {
 	private String message;
