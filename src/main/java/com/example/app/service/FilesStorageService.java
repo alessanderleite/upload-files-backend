@@ -1,4 +1,4 @@
-package com.example.app;
+package com.example.app.service;
 
 import java.nio.file.Path;
 import java.util.stream.Stream;
