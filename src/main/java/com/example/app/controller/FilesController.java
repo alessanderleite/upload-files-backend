@@ -1,5 +1,7 @@
 package com.example.app.controller;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -14,7 +16,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
@@ -30,15 +31,20 @@ public class FilesController {
 	FilesStorageService storageService;
 	
 	@PostMapping("/upload")
-	public ResponseEntity<ResponseMessage> uploadFile(@RequestParam("file") MultipartFile file) {
+	public ResponseEntity<ResponseMessage> uploadFiles(@RequestParam("files") MultipartFile[] files) {
 		String message = "";
 		try {
-			storageService.save(file);
-			message = "Uploaded the file successfully: " + file.getOriginalFilename();
-			return ResponseEntity.status(HttpStatus.OK).body(new ResponseMessage(message));
+			List<String> fileNames = new ArrayList<>();
 			
+			Arrays.asList(files).stream().forEach(file -> {
+				storageService.save(file);
+				fileNames.add(file.getOriginalFilename());
+			});
+			
+			message = "Uploaded the file successfully: " + fileNames;
+			return ResponseEntity.status(HttpStatus.OK).body(new ResponseMessage(message));
 		} catch (Exception e) {
-			message = "Could not upload the file: " + file.getOriginalFilename() + "!";
+			message = "Fail to upload files!";
 			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new ResponseMessage(message));
 		}
 	}
@@ -49,6 +55,7 @@ public class FilesController {
 			String filename = path.getFileName().toString();
 			String url = MvcUriComponentsBuilder
 					.fromMethodName(FilesController.class, "getFile", path.getFileName().toString()).build().toString();
+			
 			return new FileInfo(filename, url);
 		}).collect(Collectors.toList());
 		
@@ -56,7 +63,6 @@ public class FilesController {
 	}
 	
 	@GetMapping("/files/{filename:.+}")
-	@ResponseBody
 	public ResponseEntity<Resource> getFile(@PathVariable String filename) {
 		Resource file = storageService.load(filename);
 		return ResponseEntity.ok()
